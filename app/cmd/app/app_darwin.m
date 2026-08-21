@@ -1055,7 +1055,7 @@ didCompleteWithError:(NSError *)error {
 }
 
 - (BOOL)windowShouldClose:(id)sender {
-    [NSApp hide:nil];
+    [self hide];
     return NO;
 }
 
