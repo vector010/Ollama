@@ -386,7 +386,16 @@ function(ollama_add_llama_server_build name)
     if(NOT ARG_TARGETS)
         message(FATAL_ERROR "ollama_add_llama_server_build(${name}) requires TARGETS")
     endif()
-
+    # The default nested build command is derived from the superbuild's
+    # generator. If this target explicitly overrides its nested generator,
+    # use `cmake --build` so CMake dispatches to that generator instead.
+    set(_native_build_tool_command ${OLLAMA_NATIVE_BUILD_TOOL_COMMAND})
+    set(_native_build_target_arg ${OLLAMA_NATIVE_BUILD_TARGET_ARG})
+    if(ARG_GENERATOR)
+        set(_native_build_tool_command
+            ${CMAKE_COMMAND} --build <BINARY_DIR> ${_native_parallel_args})
+        set(_native_build_target_arg --target)
+    endif()
     if(WIN32 AND name STREQUAL "vulkan")
         # The Vulkan shader generator nests deeply enough to hit Windows MAX_PATH.
         set(_build_dir ${CMAKE_BINARY_DIR}/ls-vk)
@@ -481,9 +490,9 @@ function(ollama_add_llama_server_build name)
         SOURCE_DIR ${CMAKE_SOURCE_DIR}/llama/server
         BINARY_DIR ${_build_dir}
         CONFIGURE_COMMAND ${_configure_command}
-        BUILD_COMMAND ${OLLAMA_NATIVE_BUILD_TOOL_COMMAND}
+        BUILD_COMMAND ${_native_build_tool_command}
             ${OLLAMA_NATIVE_CONFIG_ARG}
-            ${OLLAMA_NATIVE_BUILD_TARGET_ARG} ${ARG_TARGETS}
+            ${_native_build_target_arg} ${ARG_TARGETS}
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR>
             ${OLLAMA_NATIVE_CONFIG_ARG}
             --component llama-server
